@@ -21,7 +21,6 @@ class ViewController: UIViewController {
     @IBOutlet weak var labelTime: UILabel!
     
     
-    
     var sec = 0
     var min = 0
     var hour = 0
@@ -33,6 +32,7 @@ class ViewController: UIViewController {
     var number = 1
     
     var timeRemain = 1
+    var pauseTime = 0
     
     
     override func viewDidLoad() {
@@ -57,6 +57,14 @@ class ViewController: UIViewController {
     
     @IBAction func startButton(_ sender: UIButton) {
         
+        if sender.currentTitle == "Pause" {
+            timer.invalidate()
+            startButton.setTitle("Resume", for: .normal)
+        } else if sender.currentTitle == "Resume" {
+            timerGo()
+            startButton.setTitle("Pause", for: .normal)
+        } else {
+        
         stopButton.isSelected = false
         
         number = 1
@@ -67,9 +75,33 @@ class ViewController: UIViewController {
         
         timer.invalidate()
         
+        timerGo()
+        
+        }
+    }
+    
+    @IBAction func stopButton(_ sender: UIButton) {
+        if sender.currentTitle == "Cancel" {
+            startButton.setTitle("Start", for: .normal)
+            startButton.layer.backgroundColor = UIColor.black.cgColor
+            timer.invalidate()
+            labelTime.text = "00:00"
+            
+        } else if sender.currentTitle == "Stop" {
+            stopButton.isSelected = true
+        }
+        
+        timer.invalidate()
+        number = 0
+    }
+    
+    func timerGo() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [unowned self]
             timer in
             if self.timeRemain > 0 {
+                startButton.setTitle("Pause", for: .normal)
+                startButton.layer.backgroundColor = UIColor.cyan.cgColor
+                
                 hourFormated = timeRemain / 3600
                 minFormatted = (timeRemain % 3600) / 60
                 secFormatted = timeRemain % 60
@@ -79,6 +111,8 @@ class ViewController: UIViewController {
             } else {
             timer.invalidate()
             stopButton.setTitle("Stop", for: .normal)
+                startButton.setTitle("Start", for: .normal)
+                startButton.layer.backgroundColor = UIColor.black.cgColor
            
             print("end")
             labelTime.text = "00:00"
@@ -86,17 +120,6 @@ class ViewController: UIViewController {
             
             }
         })
-        
-    }
-    
-    @IBAction func stopButton(_ sender: UIButton) {
-        if sender.currentTitle == "Cancel" {
-            timer.invalidate()
-            labelTime.text = "00:00"
-            
-        }
-        timer.invalidate()
-        number = 0
     }
     
     func countTime(min: Int, sec: Int, hour: Int) {
