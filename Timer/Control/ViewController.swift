@@ -50,7 +50,7 @@ class ViewController: UIViewController {
         timerPicker.delegate = self
         timerPicker.dataSource = self
         
-        stopButton.isSelected = true
+        stopButton.isEnabled = false
     }
     
    
@@ -65,7 +65,7 @@ class ViewController: UIViewController {
             startButton.setTitle("Pause", for: .normal)
         } else {
         
-        stopButton.isSelected = false
+            stopButton.isEnabled = true
         
         number = 1
         
@@ -82,13 +82,15 @@ class ViewController: UIViewController {
     
     @IBAction func stopButton(_ sender: UIButton) {
         if sender.currentTitle == "Cancel" {
+            stopButton.isEnabled = false
             startButton.setTitle("Start", for: .normal)
             startButton.layer.backgroundColor = UIColor.black.cgColor
             timer.invalidate()
             labelTime.text = "00:00"
             
         } else if sender.currentTitle == "Stop" {
-            stopButton.isSelected = true
+            stopButton.isEnabled = false
+            startButton.isEnabled = true
         }
         
         timer.invalidate()
@@ -100,23 +102,23 @@ class ViewController: UIViewController {
             timer in
             if self.timeRemain > 0 {
                 startButton.setTitle("Pause", for: .normal)
-                startButton.layer.backgroundColor = UIColor.cyan.cgColor
+                startButton.layer.backgroundColor = UIColor(red: 255.0/255.0, green: 222.0/255.0, blue: 172.0/255.0, alpha: 0.4).cgColor
                 
                 hourFormated = timeRemain / 3600
                 minFormatted = (timeRemain % 3600) / 60
                 secFormatted = timeRemain % 60
                 labelTime.text = "\(hourFormated):\(minFormatted):\(secFormatted)"
                 self.timeRemain -= 1
-                print(timeRemain)
             } else {
             timer.invalidate()
             stopButton.setTitle("Stop", for: .normal)
-                startButton.setTitle("Start", for: .normal)
-                startButton.layer.backgroundColor = UIColor.black.cgColor
+            startButton.setTitle("Start", for: .normal)
+            startButton.layer.backgroundColor = UIColor.black.cgColor
            
-            print("end")
             labelTime.text = "00:00"
             playSound(soundName: systemSound)
+                
+            startButton.isEnabled = false // выключает кнопку
             
             }
         })
