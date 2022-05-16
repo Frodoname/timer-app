@@ -11,32 +11,22 @@ import AVFoundation
 class ViewController: UIViewController {
     
     var timeData = TimeData()
+    var timeModel = TimeModel()
+    var timerBrain = TimerBrain()
     var timer = Timer()
-    let systemSound: SystemSoundID = 1304
-    var player = AVAudioPlayer()
-
+    
+    var timeLeft = 0
+    var alarmIsPlaying = false
+    let alarmSound: SystemSoundID = 1304
+    
     @IBOutlet weak var startButton: UIButton!
     @IBOutlet weak var stopButton: UIButton!
     @IBOutlet weak var timerPicker: UIPickerView!
     @IBOutlet weak var labelTime: UILabel!
     
-    
-    var sec = 0
-    var min = 0
-    var hour = 0
-    
-    var secFormatted = 0
-    var minFormatted = 0
-    var hourFormated = 0
-    
-    var number = 1
-    
-    var timeRemain = 1
-    var pauseTime = 0
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         startButton.layer.cornerRadius = startButton.frame.width / 2
         startButton.layer.masksToBounds = true
         startButton.layer.borderWidth = 1
@@ -46,37 +36,28 @@ class ViewController: UIViewController {
         stopButton.layer.masksToBounds = true
         stopButton.layer.borderWidth = 1
         stopButton.layer.borderColor = UIColor.red.cgColor
+        stopButton.isEnabled = false
         
         timerPicker.delegate = self
         timerPicker.dataSource = self
         
-        stopButton.isEnabled = false
     }
     
-   
-    
     @IBAction func startButton(_ sender: UIButton) {
-        
         if sender.currentTitle == "Pause" {
             timer.invalidate()
             startButton.setTitle("Resume", for: .normal)
         } else if sender.currentTitle == "Resume" {
-            timerGo()
+            forTimerGo()
             startButton.setTitle("Pause", for: .normal)
         } else {
-        
+            startButton.isEnabled = true
             stopButton.isEnabled = true
-        
-        number = 1
-        
-        stopButton.setTitle("Cancel", for: .normal)
-        
-        countTime(min: min, sec: sec, hour: hour)
-        
-        timer.invalidate()
-        
-        timerGo()
-        
+            alarmIsPlaying = true
+            stopButton.setTitle("Cancel", for: .normal)
+            timeLeft = self.timerBrain.countTime(timeLeft: self.timeModel)
+            timer.invalidate()
+            forTimerGo()
         }
     }
     
@@ -85,59 +66,54 @@ class ViewController: UIViewController {
             stopButton.isEnabled = false
             startButton.setTitle("Start", for: .normal)
             startButton.layer.backgroundColor = UIColor.black.cgColor
+            startButton.layer.borderColor = UIColor.green.cgColor
             timer.invalidate()
-            labelTime.text = "00:00"
+            labelTime.text = "00:00:00"
             
         } else if sender.currentTitle == "Stop" {
             stopButton.isEnabled = false
             startButton.isEnabled = true
+            
+            alarmIsPlaying = false
+            
         }
-        
-        timer.invalidate()
-        number = 0
+            timer.invalidate()
     }
+    //MARK: - TimerFunc
     
-    func timerGo() {
+    func forTimerGo() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [unowned self]
             timer in
-            if self.timeRemain > 0 {
+            if timeLeft > 0 {
                 startButton.setTitle("Pause", for: .normal)
-                startButton.layer.backgroundColor = UIColor(red: 255.0/255.0, green: 222.0/255.0, blue: 172.0/255.0, alpha: 0.4).cgColor
-                
-                hourFormated = timeRemain / 3600
-                minFormatted = (timeRemain % 3600) / 60
-                secFormatted = timeRemain % 60
-                labelTime.text = "\(hourFormated):\(minFormatted):\(secFormatted)"
-                self.timeRemain -= 1
+                startButton.layer.backgroundColor = UIColor(red: 255.0/255.0, green: 167.0/255.0, blue: 34.0/255.0, alpha: 0.2).cgColor
+                timerBrain.formateTime(forFormat: timeLeft)
+                labelTime.text = String(format: "%02i:%02i:%02i", timerBrain.hourFormated, timerBrain.minFormatted, timerBrain.secFormatted)
+                timeLeft -= 1
             } else {
-            timer.invalidate()
-            stopButton.setTitle("Stop", for: .normal)
-            startButton.setTitle("Start", for: .normal)
-            startButton.layer.backgroundColor = UIColor.black.cgColor
-           
-            labelTime.text = "00:00"
-            playSound(soundName: systemSound)
-                
-            startButton.isEnabled = false // выключает кнопку
-            
+                timer.invalidate()
+                stopButton.setTitle("Stop", for: .normal)
+                startButton.setTitle("Start", for: .normal)
+                startButton.layer.backgroundColor = UIColor.black.cgColor
+                startButton.layer.borderColor = UIColor.green.cgColor
+                labelTime.text = "00:00:00"
+                playAlarm()
+                startButton.isEnabled = false
             }
         })
+        
     }
     
-    func countTime(min: Int, sec: Int, hour: Int) {
-        
-        timeRemain = min * 60 + sec + hour * 3600
-    }
+//MARK: - playSoundFunc
     
-    func playSound(soundName: SystemSoundID)  {
-        
-            AudioServicesPlayAlertSoundWithCompletion(soundName) {
-                if self.number > 0 {
-                    self.playSound(soundName: soundName)
-                } else {
+    func playAlarm() {
+        AudioServicesPlayAlertSoundWithCompletion(alarmSound) {
+            if self.alarmIsPlaying == true  {
+                self.playAlarm()
+                } else  {
                     return
-                }
             }
+        }
     }
 }
 
@@ -152,7 +128,7 @@ extension ViewController: UIPickerViewDelegate, UIPickerViewDataSource {
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
         switch component {
         case 1:
-            return timeData.munites.count
+            return timeData.minutes.count
         case 2:
             return timeData.seconds.count
         default:
@@ -163,7 +139,7 @@ extension ViewController: UIPickerViewDelegate, UIPickerViewDataSource {
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         switch component {
         case 1:
-            return "\(timeData.munites[row]) min"
+            return "\(timeData.minutes[row]) min"
         case 2:
             return "\(timeData.seconds[row]) sec"
         default:
@@ -174,12 +150,14 @@ extension ViewController: UIPickerViewDelegate, UIPickerViewDataSource {
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         switch component {
         case 1:
-            min = row
+            timeModel.min = row
         case 2:
-            sec = row
+            timeModel.sec = row
         default:
-            hour = row
+            timeModel.hour = row
         }
+        
     }
-    
 }
+
+

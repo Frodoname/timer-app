@@ -10,7 +10,7 @@ import Foundation
 struct TimeData {
     
     let seconds = Array(0...59)
-    let munites = Array(0...59)
+    let minutes = Array(0...59)
     let hours = Array(0...23)
 }
 
